@@ -4,27 +4,24 @@ TriOsc s => dac;
 0 => int idx;
 keys[idx] => int key;
 
+fun void play (int midiNote, float time) {
+	Math.mtof(midiNote) => s.freq;
+	time::second => now;
+}
+
 while (true) {
 
-	Math.mtof(key + 2) => s.freq;
-	0.2::second => now;
-	0 => s.freq;
-	0.10::second => now;
+	play(key + 2, 0.2);
+	play(0, 0.1);
 
-	Math.mtof(key + 5) => s.freq;
-	0.4::second => now;
-	0 => s.freq;
-	0.2::second => now;
+	play(key + 5, 0.4);
+	play(0, 0.2);
 
-	Math.mtof(key + 0) => s.freq;
-	0.2::second => now;
-	0 => s.freq;
-	0.10::second => now;
+	play(key + 0, 0.2);
+	play(0, 0.1);
 
-	Math.mtof(key + 5) => s.freq;
-	0.4::second => now;
-	0 => s.freq;
-	0.6::second => now;
+	play(key + 5, 0.4);
+	play(0, 0.6);
 
 	idx + 1 => idx;
 	keys[idx%2] => key;
