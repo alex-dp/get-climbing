@@ -17,7 +17,7 @@ function Init:draw()
 	love.graphics.setColor(255, 255, 255, 255)
 
 	love.graphics.setFont(fonts[80])
-	love.graphics.printf("TROVAMI\nUN\nNOME", 0, height/2 - 150, width, "center")
+	love.graphics.printf("GET CLIMBING!", 0, height/2 - 150, width, "center")
 	if math.floor(delay * 5)%5 < 3 then
 		love.graphics.setFont(fonts[25])
 		love.graphics.printf("PRESS ANY KEY TO START", 0, height/2 + 150, width, "center")
