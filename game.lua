@@ -61,21 +61,23 @@ end
 function Game:draw()
 	local dy = 0
 	local dx = 0
+	
+	local xPos, yPos = objects.player.body:getPosition()
 
-	for k, v in ipairs(objects.clouds) do --clouds are the farthest away
+	for k, v in ipairs(objects.clouds) do	--clouds are the farthest away
 		love.graphics.draw(cloud, v.x, v.y)
 	end
 
-	if objects.player.body:getY() - camera.y < height / 3 then
-		dy = objects.player.body:getY() - camera.y - height / 3
-	elseif objects.player.body:getY() - camera.y > 2 * height / 3 then
-		dy = objects.player.body:getY() - camera.y - 2 * height / 3
+	if yPos - camera.y < height / 3 then
+		dy = yPos - camera.y - height / 3
+	elseif yPos - camera.y > 2 * height / 3 then
+		dy = yPos - camera.y - 2 * height / 3
 	end
 
-	if objects.player.body:getX() - camera.x < width / 3 then
-		dx = objects.player.body:getX() - camera.x - width / 3
-	elseif objects.player.body:getX() - camera.x > 2 * width / 3 then
-		dx = objects.player.body:getX() - camera.x - 2 * width / 3
+	if xPos - camera.x < width / 3 then
+		dx = xPos - camera.x - width / 3
+	elseif xPos - camera.x > 2 * width / 3 then
+		dx = xPos - camera.x - 2 * width / 3
 	end
 
 	camera.y = camera.y + dy

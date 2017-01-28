@@ -8,8 +8,10 @@ function Foe:new(x, y, w, h, world)
 	self.world = world
 
 	self.delay = 0
-
 	self.heading = 1
+	self.health = 4
+	self.maxhealth = 6
+	self.xp = 1			--CHANGE ME
 
 	self.body = love.physics.newBody(self.world, self.x, self.y, "dynamic")
 	self.shape = love.physics.newRectangleShape(self.w, self.h)
@@ -17,8 +19,6 @@ function Foe:new(x, y, w, h, world)
 
 	self.fixture:setFriction(0)
 	self.fixture:setRestitution(0)
-
---	self.body:setLinearVelocity(math.random(-500, 500), 0)
 
 	self.body:setLinearVelocity(self:randomVel(), 0)
 end
@@ -46,8 +46,7 @@ function Foe:update(dt, dy)
 	end
 
 	if round(x, -2) == 0 then
---		self.body:setLinearVelocity(math.random(-500, 500), 0)
-		self.body:setLinearVelocity(self:randomVel(), 0)
+		self.heading = math.floor(math.random(0, 2)) -1
 	end
 end
 
@@ -55,21 +54,35 @@ function Foe:draw(dx, dy)
 	local edge, ii
 	local xs, ys = self.body:getLinearVelocity()
 
-	if round(xs, 0) ~= 0 then
+	if round(xs, -2) ~= 0 then
 	    if math.floor(self.delay * 10) % 8 < 4 then
 	    	ii = 2
 	    else ii = 3
 	    end
-	else ii = 1
+	else ii = 1		--is still
 	end
 
-	if self.heading == -1 then
-		edge = self:edge("right")
+	if self.heading == 1 then
+		edge = self:edge("left")
 	else
+		edge = self:edge("right")
+	end
+	
+	local scale = self.heading
+	if round(xs, -2) == 0 then
+		scale = 1
 		edge = self:edge("left")
 	end
-
-	love.graphics.draw(objects.player.sprites[not objects.player.gender][ii], edge, self:edge("top"), 0, self.heading, 1)
+	
+	love.graphics.draw(objects.player.sprites[not objects.player.gender][ii], edge, self:edge("top"), 0, scale, 1)
+	
+	love.graphics.setColor(215, 40, 40, 0x80)
+	love.graphics.rectangle("fill", self:edge("left"), self:edge("top") - 24, 64, 8)
+	
+	love.graphics.setColor(215, 40, 40)
+	love.graphics.rectangle("fill", self:edge("left"), self:edge("top") - 24, self.health * 64 / self.maxhealth, 8)
+	
+	love.graphics.setColor(255, 255, 255)
 end
 
 function Foe:randomVel()

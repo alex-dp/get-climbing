@@ -1,7 +1,5 @@
 Player = Object:extend()
 
---require "bullet"
-
 local room  = love.graphics.newImage("gfx/room1.png")
 local delay = 0
 local foe_del = 0
@@ -15,7 +13,12 @@ function Player:new(x, y, w, h, world)
 
 	self.heading = 1
 	self.gender = true
-	self.health = 3
+	self.health = 5
+	self.maxhealth = 5
+	self.power = {low = 1, high = 3}
+	self.lvl = 1
+	self.xp = 0
+	self.nextlvl = 8
 
 	self.body = love.physics.newBody(self.world, self.x, self.y, "dynamic")
 	self.shape = love.physics.newRectangleShape(self.w, self.h)
@@ -35,9 +38,7 @@ function Player:new(x, y, w, h, world)
 			love.graphics.newImage("gfx/f_idle.png"),
 			love.graphics.newImage("gfx/f_walk1.png"),
 			love.graphics.newImage("gfx/f_walk2.png")
-		},
-
-		heart = love.graphics.newImage("gfx/heart.png")
+		}
 	}
 
 	self.foes = {}
@@ -78,14 +79,21 @@ function Player:update(dt, dy)
 
 	if foe_del > 5 then
 		if math.floor(foe_del) % 10 == 0 and count(self.foes) < 5 then
-			local foe = Foe(math.random(width / 2 - 500, width / 2 + 500), self:edge("top") - math.random(400, 800), 64, 64, self.world)
+			local foe = Foe(math.random(width / 2 - 500, width / 2 + 500), self:edge("top") - math.random(200, 400), 64, 64, self.world)
 			table.insert(self.foes, foe)
 			foe_del = 1
 		end
 	end
 
 	for k, v in ipairs(self.foes) do
+		foeXv, foeYv = v.body:getLinearVelocity()
+		v.body:setLinearVelocity(v.heading * math.abs(xs), foeYv)
 		v:update(dt, dy)
+		if v.health == 0 then
+			self.xp = self.xp + v.xp
+			table.remove(self.foes, k)
+			v.body:destroy()
+		end
 	end
 
 	for k, v in ipairs(self.foes) do
@@ -94,7 +102,23 @@ function Player:update(dt, dy)
 			v.body:destroy()
 		end
 	end
-
+	
+	if self.xp == self.nextlvl then
+		self.lvl = self.lvl + 1
+		self.xp = 0
+		self. netxlvl = math.floor(2.5 * self.lvl) + 5
+		for i = 1, 5 do
+			local dest = math.random(3)
+			if dest == 1 then
+				self.health = self.health + math.floor(self.lvl / 2)
+				self.maxhealth = self.maxhealth + math.floor(self.lvl / 2)
+			elseif dest == 2 and self.power.low < self.power.high then
+				self.power.low = self.power.low + 1
+			elseif dest == 3 then
+				self.power.high = self.power.high + 1
+			end			
+		end
+	end
 end
 
 function Player:draw(dx, dy)
@@ -125,11 +149,27 @@ function Player:draw(dx, dy)
 		love.graphics.rectangle("fill", 30 + dx, height - 158 + dy, 128, 128)
 		love.graphics.rectangle("fill", 188 + dx, height - 158 + dy, 128, 128)
 		love.graphics.rectangle("fill", width - 158 + dx, height - 158 + dy, 128, 128)
+		love.graphics.rectangle("fill", width - 316 + dx, height - 158 + dy, 128, 128)
 		love.graphics.setColor(255, 255, 255)
 	end
-
-	for i = 1, self.health do
-		love.graphics.draw(self.sprites.heart, (i-1) * 84 + 16*i + dx, 16 + dy)
+	
+	if mode == "play" then
+		love.graphics.setColor(215, 40, 40, 0x80)
+		love.graphics.rectangle("fill", 30 + dx, 20 + dy, width / 3, 36)
+		
+		love.graphics.setColor(215, 40, 40)
+		love.graphics.rectangle("fill", 30 + dx, 20 + dy, self.health * (width / 3) / self.maxhealth, 36)
+		
+		love.graphics.setColor(215, 195, 30, 0x80)
+		love.graphics.rectangle("fill", 30 + dx, 70 + dy, width / 3, 18)
+		
+		love.graphics.setColor(215, 195, 30)
+		love.graphics.rectangle("fill", 30 + dx, 70 + dy, self.xp * (width / 3) / self.nextlvl, 18)
+		
+		love.graphics.setColor(255, 255, 255)
+		
+		love.graphics.setFont(fonts[15])
+		love.graphics.printf("level " .. self.lvl, 32 + dx, 76 + dy, width, "left")
 	end
 end
 
@@ -163,6 +203,8 @@ function Player:touchpressed(x, y)
 				self.heading = 1
 			elseif x > width - 158 then
 				self:jump(xs, ys)
+			elseif x > width - 316 then
+				self:hit()
 			end
 		end
 	end
@@ -191,17 +233,18 @@ function Player:jump(xs, ys)
 	end
 end
 
+function Player:hit()
+	print("hitting...")
+	for k, v in ipairs(self.foes) do
+		if distance(v, self) < 100 then
+				v.health = v.health - 1
+		end
+	end
+end
+
 function Player:onStairs()
 	return (self:edge("right") < (width - room:getWidth() - 100) / 2 + 100 and --left side stairs
 		(height - self:edge("bottom")) % 600 > 300) or
 		(self:edge("left") > (width + room:getWidth() + 100) / 2 - 100 and --right side stairs
 		(height - self:edge("bottom")) % 600 < 300)
-end
-
-function count (t)
-	local count = 0
-	for _ in ipairs(t) do
-		count = count + 1
-	end
-	return count
 end

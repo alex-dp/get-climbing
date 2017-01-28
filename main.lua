@@ -9,8 +9,6 @@ math.randomseed(os.time())
 local rand_col = skyColors[math.random(4)]
 love.graphics.setBackgroundColor(rand_col.r, rand_col.g, rand_col.b)
 
-math.randomseed(os.time())
-
 fonts = {}
 for i = 5, 128, 5 do
 	fonts[i] = love.graphics.newFont("fonts/PressStart2P.ttf", i)
@@ -36,6 +34,7 @@ function love.load()
 	require "init"
 	require "wall"
 	require "camera"
+	require "helper"
 
 	game = Game()
 	init = Init()
@@ -79,9 +78,15 @@ function love.keypressed(key, code, rep)
 
 		TEsound.resume("music")
 		mode = "play"
-	elseif mode == "play" and key == "escape" then
-		mode = "init"
-		TEsound.pause("music")
+	elseif mode == "play" then
+		if key == "escape" then
+			mode = "init"
+			TEsound.pause("music")
+		end
+		
+		if key == "k" then
+			objects.player:hit()
+		end
 	end
 
 --	if key == "f11" then
@@ -107,11 +112,6 @@ end
 
 
 function love.mousepressed(x, y, b, t)
-end
-
-function round(num, idp)
-  local mult = 10^(idp or 0)
-  return math.floor(num * mult + 0.5) / mult
 end
 
 function fetchDims()
