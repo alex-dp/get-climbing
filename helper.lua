@@ -19,3 +19,16 @@ function round(num, idp)
   local mult = 10^(idp or 0)
   return math.floor(num * mult + 0.5) / mult
 end
+
+--Body(), string, returns distance of a body's edge from (y=0) or (x=0)
+function edge(body, s)
+	if s == "top" then
+		return body:getY() - body:getUserData().h / 2
+	elseif s == "right" then
+		return body:getX() + body:getUserData().w / 2
+	elseif s == "bottom" then
+		return body:getY() + body:getUserData().h / 2
+	elseif s == "left" then
+		return body:getX() - body:getUserData().w / 2
+	end
+end

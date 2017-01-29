@@ -3,6 +3,7 @@ Player = Object:extend()
 local room  = love.graphics.newImage("gfx/room1.png")
 local delay = 0
 local foe_del = 0
+local filter = {r = 0, g = 0, b = 0}
 
 function Player:new(x, y, w, h, world)
 	self.x = x
@@ -13,8 +14,8 @@ function Player:new(x, y, w, h, world)
 
 	self.heading = 1
 	self.gender = true
-	self.health = 5
-	self.maxhealth = 5
+	self.health = 25
+	self.maxhealth = 25
 	self.power = {low = 1, high = 3}
 	self.lvl = 1
 	self.xp = 0
@@ -26,6 +27,7 @@ function Player:new(x, y, w, h, world)
 
 	self.fixture:setFriction(1)
 	self.fixture:setRestitution(0)
+	self.fixture:setCategory(1)
 
 	self.sprites = {
 		[true] = {
@@ -42,18 +44,7 @@ function Player:new(x, y, w, h, world)
 	}
 
 	self.foes = {}
-end
-
-function Player:edge(s)
-	if s == "top" then
-		return self.body:getY() - self.h / 2
-	elseif s == "right" then
-		return self.body:getX() + self.w / 2
-	elseif s == "bottom" then
-		return self.body:getY() + self.h / 2
-	elseif s == "left" then
-		return self.body:getX() - self.w / 2
-	end
+	self.body:setUserData({type = "player", w = self.w, h = self.h})
 end
 
 function Player:update(dt, dy)
@@ -72,41 +63,34 @@ function Player:update(dt, dy)
 		self.fixture:setFriction(0)
 	end
 
-	if self:onStairs() then
-		self.body:setGravityScale(0)
-	else self.body:setGravityScale(1)
-	end
-
 	if foe_del > 5 then
 		if math.floor(foe_del) % 10 == 0 and count(self.foes) < 5 then
-			local foe = Foe(math.random(width / 2 - 500, width / 2 + 500), self:edge("top") - math.random(200, 400), 64, 64, self.world)
+			local foe = Foe(math.random(width / 2 - 500, width / 2 + 500), edge(self.body, "top") - math.random(height, height + 600), 64, 64, self.world)
 			table.insert(self.foes, foe)
 			foe_del = 1
 		end
 	end
 
 	for k, v in ipairs(self.foes) do
+		if math.random(100) == 1 then
+			v.heading = -v.heading
+		end
+		
 		foeXv, foeYv = v.body:getLinearVelocity()
 		v.body:setLinearVelocity(v.heading * math.abs(xs), foeYv)
 		v:update(dt, dy)
-		if v.health == 0 then
+		if v.health <= 0 or v.body:getY() > camera.y + height + 256 then
 			self.xp = self.xp + v.xp
 			table.remove(self.foes, k)
 			v.body:destroy()
 		end
 	end
-
-	for k, v in ipairs(self.foes) do
-		if v.body:getY() > camera.y + height + 256 then
-			table.remove(self.foes, k)
-			v.body:destroy()
-		end
-	end
 	
-	if self.xp == self.nextlvl then
+	if self.xp >= self.nextlvl then
+		print(self.xp)
 		self.lvl = self.lvl + 1
-		self.xp = 0
-		self. netxlvl = math.floor(2.5 * self.lvl) + 5
+		self.xp = self.xp - self.nextlvl
+		self.netxlvl = math.floor(2.5 * self.lvl) + 5
 		for i = 1, 5 do
 			local dest = math.random(3)
 			if dest == 1 then
@@ -118,17 +102,23 @@ function Player:update(dt, dy)
 				self.power.high = self.power.high + 1
 			end			
 		end
+		
+		print(self.nextlvl)
 	end
+	
+	if filter.r > 0 then filter.r = filter.r - 5 end
+	if filter.g > 0 then filter.g = filter.g - 5 end
+	if filter.b > 0 then filter.b = filter.b - 5 end
 end
 
 function Player:draw(dx, dy)
 	local xs, ys = self.body:getLinearVelocity()
-	local edge, im
+	local side, im
 
 	if self.heading == -1 then
-		edge = self:edge("right")
+		side = edge(self.body, "right")
 	else
-		edge = self:edge("left")
+		side = edge(self.body, "left")
 	end
 
 	if round(xs, -1) ~= 0 then
@@ -142,7 +132,9 @@ function Player:draw(dx, dy)
 	for k, v in ipairs(self.foes) do
 		v:draw(dx, dy)
 	end
-	love.graphics.draw(self.sprites[self.gender][im], edge, self:edge("top"), 0, self.heading, 1)
+	
+	love.graphics.setColor(255 - filter.r, 255 - filter.g, 255 - filter.b)
+	love.graphics.draw(self.sprites[self.gender][im], side, edge(self.body, "top"), 0, self.heading, 1)
 
 	if touch then
 		love.graphics.setColor(255, 255, 255, 0x80)
@@ -160,10 +152,10 @@ function Player:draw(dx, dy)
 		love.graphics.setColor(215, 40, 40)
 		love.graphics.rectangle("fill", 30 + dx, 20 + dy, self.health * (width / 3) / self.maxhealth, 36)
 		
-		love.graphics.setColor(215, 195, 30, 0x80)
+		love.graphics.setColor(215, 200, 45, 0x80)
 		love.graphics.rectangle("fill", 30 + dx, 70 + dy, width / 3, 18)
 		
-		love.graphics.setColor(215, 195, 30)
+		love.graphics.setColor(215, 200, 45)
 		love.graphics.rectangle("fill", 30 + dx, 70 + dy, self.xp * (width / 3) / self.nextlvl, 18)
 		
 		love.graphics.setColor(255, 255, 255)
@@ -178,6 +170,10 @@ function Player:keypressed(key, code, rep)
 	local xs, ys = self.body:getLinearVelocity()
 	if key == "space" then
 	    self:jump(xs, ys)
+	elseif key == "k" then
+		self:hit()
+		print(self.body:getX())
+		print(self.body:getY())
 	end
 end
 
@@ -213,16 +209,8 @@ end
 function Player:touchreleased(x, y)
 	if mode == "play" then
 		local xs, ys = self.body:getLinearVelocity()
-
-
-		if y > height - 158 and y < height - 30 then
-			if x < 158 --[[and xs < 0]] then
-				self.body:setLinearVelocity(0, ys)
-				self.heading = -1
-			elseif x < 316 --[[and xs > 0]] then
-				self.body:setLinearVelocity(0, ys)
-				self.heading = 1
-			end
+		if count(love.touch.getTouches()) == 0 then
+			self.body:setLinearVelocity(0, ys)
 		end
 	end
 end
@@ -234,17 +222,15 @@ function Player:jump(xs, ys)
 end
 
 function Player:hit()
-	print("hitting...")
 	for k, v in ipairs(self.foes) do
 		if distance(v, self) < 100 then
-				v.health = v.health - 1
+				v:deal(math.random(self.power.low, self.power.high))
 		end
 	end
 end
 
-function Player:onStairs()
-	return (self:edge("right") < (width - room:getWidth() - 100) / 2 + 100 and --left side stairs
-		(height - self:edge("bottom")) % 600 > 300) or
-		(self:edge("left") > (width + room:getWidth() + 100) / 2 - 100 and --right side stairs
-		(height - self:edge("bottom")) % 600 < 300)
+function Player:deal(damage)
+	self.health = self.health - damage
+	filter.g = 100
+	filter.b = 100
 end

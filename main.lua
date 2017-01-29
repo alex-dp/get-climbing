@@ -35,6 +35,7 @@ function love.load()
 	require "wall"
 	require "camera"
 	require "helper"
+	require "callbacks"
 
 	game = Game()
 	init = Init()
@@ -44,6 +45,8 @@ function love.load()
 
 	TEsound.playLooping(music, "music")
 	TEsound.pause("music")
+	
+	world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 end
 
 function love.update(dt)
@@ -83,16 +86,7 @@ function love.keypressed(key, code, rep)
 			mode = "init"
 			TEsound.pause("music")
 		end
-		
-		if key == "k" then
-			objects.player:hit()
-		end
 	end
-
---	if key == "f11" then
---		love.window.setFullscreen(not love.window.getFullscreen())
---		fetchDims()
---	end
 end
 
 function love.keyreleased(key, code, rep)
@@ -117,8 +111,4 @@ end
 function fetchDims()
 	width = love.graphics.getWidth()
 	height = love.graphics.getHeight()
-end
-
-function love.resize(w, h)
-	width, height = w, h
 end

@@ -7,12 +7,31 @@ objects = {}
 room = {w = 1500, h = 300}
 
 local function add_floor()
-	local diff
+	local diff, xpos
 	if wall_count % 2 == 0 then
 			diff = 50
-		else diff = -50
+		else
+			diff = -50
 	end
 	objects.walls[wall_count] = Wall(width/2 + diff, height - wall_count*room.h, room.w, 1, world)
+	
+	objects.boundaries[wall_count] = {
+		Wall((width - room.w - 100) / 2, -(wall_count - 1)*300 + height, 1, 300, world),
+		Wall((width + room.w + 100) / 2, -(wall_count - 1)*300 + height, 1, 300, world)
+	}
+	
+	objects.steps[wall_count] = {}
+	
+	if wall_count % 2 == 0 then
+			xpos = (width - room.w) / 2
+		else
+			xpos = (width + room.w) / 2
+	end
+	
+	for i = 1, 5 do
+		objects.steps[wall_count][i] = Wall(xpos, 300*(i/5 - wall_count) + height - 60, 100, 1, world, "step")
+	end
+	
 	wall_count = wall_count + 1
 end
 
@@ -26,9 +45,8 @@ function Game:load()
 	objects.ground = Wall(width / 2, 7*height/6, room.w + 100 + 2*width/3, height/3, world)
 	objects.walls = {}
 	objects.clouds = {}
-
-	objects.boundaries = {Wall((width - room.w - 100) / 2, -50*300 + height, 1, 100*300, world),
-			Wall((width + room.w + 100) / 2, -50*300 + height, 1, 100*300, world)}
+	objects.boundaries = {}
+	objects.steps = {}
 
 	repeat
 		add_floor()
@@ -47,7 +65,7 @@ function Game:update(dt)
 	end
 
 	for k, v in ipairs(objects.clouds) do
-		v.x = v.x + 60*dt
+		v.x = v.x + 60 * dt
 		if v.x > width then
 			table.remove(objects.clouds, k)
 		end
@@ -55,6 +73,28 @@ function Game:update(dt)
 
 	if objects.walls[#objects.walls].y > camera.y then
 		add_floor()
+	end
+	
+	for k, v in ipairs(objects.walls) do
+		if not v.body:isDestroyed() then
+			if v.body:getY() > camera.y + height + 600 then
+				v.body:destroy()
+				--table.remove(objects.walls, k)
+				objects.boundaries[k][1].body:destroy()
+				objects.boundaries[k][2].body:destroy()
+				--table.remove(objects.boundaries, k)
+			end
+		end
+	end
+	
+	for k, v in ipairs(objects.steps) do
+		for i, s in ipairs(v) do
+			if edge(objects.player.body, "bottom") < s.body:getY() then
+				s.fixture:setMask()
+			else
+				s.fixture:setMask(1)
+			end
+		end
 	end
 end
 
@@ -87,18 +127,21 @@ function Game:draw()
 	objects.ground:draw()
 	love.graphics.setColor(255, 255, 255)
 	for k, v in ipairs(objects.walls) do
-		local xpos
-		if k % 2 == 1 then
-			xpos = v.body:getX() + room.w / 2
-		else xpos = v.body:getX() - room.w / 2 - 100
+		if not v.body:isDestroyed() then
+			local xpos
+			if k % 2 == 1 then
+				xpos = v.x + room.w / 2
+			else
+				xpos = v.x - room.w / 2 - 100
+			end
+			local index
+			if k % 10 == 4 then
+				index = 2
+			else index = 1
+			end
+			love.graphics.draw(rooms[index], v.x - room.w/2, v.y)
+			love.graphics.draw(stairs, xpos, v.y)
 		end
-		local index
-		if k % 10 == 4 then
-			index = 2
-		else index = 1
-		end
-		love.graphics.draw(rooms[index], v.body:getX() - room.w/2, v.y)
-		love.graphics.draw(stairs, xpos, v.y)
 	end
 
 	objects.player:draw(camera.x, camera.y)
