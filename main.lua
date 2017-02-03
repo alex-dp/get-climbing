@@ -14,6 +14,8 @@ for i = 5, 128, 5 do
 	fonts[i] = love.graphics.newFont("fonts/PressStart2P.ttf", i)
 end
 
+require "images"
+require "items"
 music = {love.sound.newSoundData("music/easy.wav")}
 
 mode = "init"
@@ -22,7 +24,8 @@ local game
 local init
 
 function love.load()
-	world = love.physics.newWorld(0, 5000, true)
+	love.filesystem.setIdentity("gc")
+	world = love.physics.newWorld(0, 5000)
 
 	fetchDims()
 
@@ -36,6 +39,7 @@ function love.load()
 	require "camera"
 	require "helper"
 	require "callbacks"
+	require "item"
 
 	game = Game()
 	init = Init()
@@ -47,6 +51,8 @@ function love.load()
 	TEsound.pause("music")
 	
 	world:setCallbacks(beginContact, endContact, preSolve, postSolve)
+	
+	hiscore = love.filesystem.read("hiscore")
 end
 
 function love.update(dt)
@@ -54,6 +60,10 @@ function love.update(dt)
 
 	if mode == "init" then
 		init:update(dt)
+	end
+	
+	if objects.player.dead then
+		game:load()
 	end
 
 	TEsound.cleanup()
@@ -71,6 +81,12 @@ function love.keypressed(key, code, rep)
 	objects.player:keypressed(key, code, rep)
 	if mode == "init" and key ~= "unknown" then
 		if key == "escape" then
+			local storey = objects.player:storey()
+			if not hiscore or storey > tonumber(hiscore) then
+				love.filesystem.write("hiscore", storey)
+				hiscore = storey
+				print(love.filesystem.getSaveDirectory())
+			end
 			love.event.quit()
 		end
 
