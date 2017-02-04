@@ -3,7 +3,8 @@ images = {
 		stairs = love.graphics.newImage("gfx/stairs_icon.png")
 	},
 	stamps = {
-		[1] = love.graphics.newImage("gfx/stamps/one.png")
+		[1] = love.graphics.newImage("gfx/stamps/one.png"),
+		[2] = love.graphics.newImage("gfx/stamps/two.png")
 	},
 	rooms  = {
 		love.graphics.newImage("gfx/room1.png"),

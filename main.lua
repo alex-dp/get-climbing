@@ -14,38 +14,43 @@ for i = 5, 128, 5 do
 	fonts[i] = love.graphics.newFont("fonts/PressStart2P.ttf", i)
 end
 
-require "images"
-require "items"
+require "logic/images"
+require "logic/items"
 music = {love.sound.newSoundData("music/easy.wav")}
 
 mode = "init"
 touch = love.system.getOS() == "Android" or love.system.getOS() == "iOS"
 local game
 local init
+local credits
 
 function love.load()
 	love.filesystem.setIdentity("gc")
 	world = love.physics.newWorld(0, 5000)
+	love.physics.setMeter(30)
 
 	fetchDims()
 
-	Object = require "classic"
-	require "TEsound"
-	require "game"
-	require "foe"
-	require "player"
-	require "init"
-	require "wall"
-	require "camera"
-	require "helper"
-	require "callbacks"
-	require "item"
+	Object = require "logic/classic"
+	require "logic/TEsound"
+	require "logic/camera"
+	require "logic/helper"
+	require "logic/callbacks"
+	require "screens/game"
+	require "screens/init"
+	require "screens/credits"
+	require "classes/foe"
+	require "classes/player"
+	require "classes/wall"
+	require "classes/item"
 
 	game = Game()
 	init = Init()
+	credits = Credits()
 
 	game:load()
 	init:load()
+	credits:load()
 
 	TEsound.playLooping(music, "music")
 	TEsound.pause("music")
@@ -74,6 +79,8 @@ function love.draw()
 
 	if mode == "init" then
 		init:draw()
+	elseif mode == "credits" then
+		credits:draw()
 	end
 end
 
@@ -97,6 +104,8 @@ function love.keypressed(key, code, rep)
 
 		TEsound.resume("music")
 		mode = "play"
+	elseif mode == "credits" then
+		mode = "init"
 	elseif mode == "play" then
 		if key == "escape" then
 			mode = "init"
@@ -122,6 +131,9 @@ end
 
 
 function love.mousepressed(x, y, b, t)
+	if mode == "init" then
+		init:mousepressed(x, y, b, t)
+	end
 end
 
 function fetchDims()

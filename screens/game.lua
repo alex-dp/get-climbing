@@ -6,19 +6,12 @@ objects = {}
 room = {w = 1500, h = 300}
 
 local function add_floor()
-	local xpos
 	objects.walls[wall_count] = Wall(width/2, height - wall_count*room.h, room.w, 1, world, "floor")
 	
 	objects.boundaries[wall_count] = {
 		Wall((width - room.w) / 2, -(wall_count - 1)*300 + height, 1, 300, world, "wall"),
 		Wall((width + room.w) / 2 + 100, -(wall_count - 1)*300 + height, 1, 300, world, "wall")
 	}
-	
-	if wall_count % 2 == 0 then
-			xpos = (width - room.w) / 2
-		else
-			xpos = (width + room.w) / 2
-	end
 	
 	wall_count = wall_count + 1
 end
@@ -28,19 +21,18 @@ function Game:load()
 	objects = {}
 
 	objects.player = Player(width/2, height - 128, world)
-	objects.walls = {Wall(width / 2 , height, room.w, 1, world, "floor")}
+	objects.walls = {Wall(width / 2 + 50, height, room.w + 100, 1, world, "floor")}
 	objects.clouds = {}
 	objects.boundaries = {}
 	
 	elevator = Wall(width / 2 + room.w / 2 + 50, height, 100, 1, world, "elev")
 	elevator.fixture:setCategory(2)
 	
-	elevator_base = Wall(width / 2 + room.w / 2 + 50, height, 100, 1, world, "base")
-	elevator_joint = love.physics.newPrismaticJoint(elevator.body, elevator_base.body,
+	elevator_joint = love.physics.newPrismaticJoint(elevator.body, objects.walls[1].body,
 		0, 0,
-		0, 1, false)
+		0, 1, true)
 	elevator_joint:setMotorEnabled(true)
-	elevator_joint:setMaxMotorForce(50000)
+	elevator_joint:setMaxMotorForce(60000)
 	elevator_joint:setLimitsEnabled(false)
 
 	repeat
@@ -80,9 +72,9 @@ function Game:update(dt)
 		if elevator.elevate then
 			elevator_joint:setMotorSpeed(300)
 		elseif elevator.body:getY() < -objects.player:storey() * 300 + height -2 then
-			elevator_joint:setMotorSpeed(-200)
+			elevator_joint:setMotorSpeed(-500)
 		elseif elevator.body:getY() > -objects.player:storey() * 300 + height +2 then
-			elevator_joint:setMotorSpeed(200)
+			elevator_joint:setMotorSpeed(500)
 		else
 			elevator_joint:setMotorSpeed(0)
 			elevator.active = false

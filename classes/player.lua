@@ -35,6 +35,7 @@ function Player:new(x, y, world)
 	self.fixture:setCategory(1)
 
 	self.foes = {}
+	self.drops = {}
 end
 
 function Player:update(dt, dy)
@@ -62,6 +63,7 @@ function Player:update(dt, dy)
 		if v.health <= 0 then
 			self.xp = self.xp + v.xp
 			table.remove(self.foes, k)
+			table.insert(self.drops, Item(stamps[v.value], v.body:getX(), v.body:getY(), world))
 			v.body:destroy()
 		elseif v.body:getY() > camera.y + height + 256 then
 			table.remove(self.foes, k)
@@ -112,7 +114,7 @@ function Player:draw(dx, dy)
 
 	if round(xs, -1) ~= 0 then
 	    if math.floor(love.timer.getTime() * 10) % 8 < 4 then
-	    	im = 2
+			im = 2
 	    else im = 3
 	    end
 	else im = 1
@@ -124,6 +126,10 @@ function Player:draw(dx, dy)
 	
 	love.graphics.setColor(255 - filter.r, 255 - filter.g, 255 - filter.b)
 	love.graphics.draw(images.player_sprites[self.gender][im], side, edge(self.body, "top"), 0, self.heading, 1)
+	
+	for k, v in ipairs(self.drops) do
+		v:draw()
+	end
 
 	if touch then
 		love.graphics.setColor(255, 255, 255, 0x80)
@@ -223,9 +229,6 @@ function Player:hit()
 				v:deal(math.random(self.power.low, self.power.high))
 		end
 	end
-	
-	print(self.body:getX())
-	print(self.body:getY())
 end
 
 function Player:deal(damage)

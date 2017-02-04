@@ -44,13 +44,26 @@ function Init:draw()
 	love.graphics.setColor(255, 255, 255)
 end
 
-function Init:touchpressed(x,y)
+function Init:touchpressed(x, y)
 	if x > width/2 - 192 and x < width/2 + 192 and
 		y > height - 192 and y < height - 64 then
 		objects.player.gender = not objects.player.gender
 
+	elseif mode == "init" then
+		if y > height - 30 and x > width - 300 then
+			mode = "credits"
+		end
 	else
 		mode = "play"
 		TEsound.resume("music")
+	end
+end
+
+function Init:mousepressed(x, y)
+
+	if mode == "init" then
+		if y > height - 30 and x > width - 300 then
+			mode = "credits"
+		end
 	end
 end

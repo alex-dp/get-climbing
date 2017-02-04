@@ -14,6 +14,7 @@ function Foe:new(x, y, world)
 	self.maxhealth = 4
 	self.xp = 1			--CHANGE ME
 	self.power = {low = 1, high = 2}		--CHANGE ME AS WELL
+	self.value = math.random(2)
 	
 	self.filter = {r = 0, g = 0, b = 0}
 

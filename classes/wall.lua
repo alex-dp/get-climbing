@@ -11,6 +11,7 @@ function Wall:new(x, y, w, h, world, tp) --implement last argument
 	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
 	
 	self.body:setGravityScale(0)
+	self.fixture:setRestitution(0)
 	self.body:setFixedRotation(true)
 	self.elevate = false
 	self.active = false
