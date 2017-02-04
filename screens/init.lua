@@ -52,10 +52,10 @@ function Init:touchpressed(x, y)
 	elseif mode == "init" then
 		if y > height - 30 and x > width - 300 then
 			mode = "credits"
+		else
+			mode = "play"
+			TEsound.resume("music")
 		end
-	else
-		mode = "play"
-		TEsound.resume("music")
 	end
 end
 
