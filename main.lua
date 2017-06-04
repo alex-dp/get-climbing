@@ -23,6 +23,7 @@ touch = love.system.getOS() == "Android" or love.system.getOS() == "iOS"
 local game
 local init
 local credits
+local dead
 
 function love.load()
 	love.filesystem.setIdentity("gc")
@@ -39,18 +40,22 @@ function love.load()
 	require "screens/game"
 	require "screens/init"
 	require "screens/credits"
+	require "screens/dead"
 	require "classes/foe"
 	require "classes/player"
 	require "classes/wall"
 	require "classes/item"
+	require "classes/storey"
 
 	game = Game()
 	init = Init()
 	credits = Credits()
+	dead = Dead()
 
 	game:load()
 	init:load()
 	credits:load()
+	dead:load()
 
 	TEsound.playLooping(music, "music")
 	TEsound.pause("music")
@@ -68,6 +73,11 @@ function love.update(dt)
 	end
 	
 	if objects.player.dead then
+		dead.fs = objects.player.stamps
+		mode = "dead"
+		world:destroy()
+		world = love.physics.newWorld(0, 5000)
+		world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 		game:load()
 	end
 
@@ -81,12 +91,15 @@ function love.draw()
 		init:draw()
 	elseif mode == "credits" then
 		credits:draw()
+	elseif mode == "dead" then
+		dead:draw()
 	end
 end
 
 function love.keypressed(key, code, rep)
-	objects.player:keypressed(key, code, rep)
-	if mode == "init" and key ~= "unknown" then
+	if key == "unknown" then return end
+	
+	if mode == "init" then
 		if key == "escape" then
 			local storey = objects.player:storey()
 			if not hiscore or storey > tonumber(hiscore) then
@@ -107,10 +120,13 @@ function love.keypressed(key, code, rep)
 	elseif mode == "credits" then
 		mode = "init"
 	elseif mode == "play" then
+		objects.player:keypressed(key, code, rep)
 		if key == "escape" then
 			mode = "init"
 			TEsound.pause("music")
 		end
+	elseif mode == "dead" then
+		mode = "init"
 	end
 end
 
@@ -122,6 +138,8 @@ function love.touchpressed(id, x, y, dx, dy, p)
 	objects.player:touchpressed(x, y)
 	if mode == "init" then
 		init:touchpressed(x, y)
+	elseif mode == "dead" then
+		mode = "init"
 	end
 end
 

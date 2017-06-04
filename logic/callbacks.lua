@@ -11,15 +11,25 @@ function beginContact(fix1, fix2, coll)
 	
 	if player ~= nil then
 		local ud = ext:getBody():getUserData()
-		if ud.type == "stamp" then
-			objects.player.stamps = objects.player.stamps + ud.value
-			ext:getBody():destroy()
-		end
 		if ud.type == "floor" then
+			if elevator.elevate and edge(player:getBody(), "top") >= ext:getBody():getY() then
+				elevator.elevate = false
+			end
 			objects.player.jumpable = true
 		elseif ud.type == "elev" then
 			elevator.elevate = true
 			elevator.active = true
+		elseif ud.type == "stamp" then
+			objects.player.stamps = objects.player.stamps + ud.value
+			objects.player:addLine("You found $" .. ud.value .. " worth of food stamps!")
+			ext:getBody():destroy()
+		elseif ud.type == "food" then
+			objects.player.health = objects.player.health + ud.value
+			if objects.player.health > objects.player.maxhealth then
+				objects.player.health = objects.player.maxhealth
+			end
+			objects.player:addLine("You eat the food you found.")
+			ext:getBody():destroy()
 		end
 	end
 end

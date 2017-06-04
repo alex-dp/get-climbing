@@ -18,3 +18,15 @@ stamps = {
 		}
 	}
 }
+
+food = {
+	sammich = {
+		image = images.food.sammich,
+		userdata = {
+			type = "food",
+			value = 3,
+			w = 64,
+			h = 64
+		}
+	}
+}

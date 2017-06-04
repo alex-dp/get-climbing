@@ -10,6 +10,9 @@ images = {
 		love.graphics.newImage("gfx/room1.png"),
 		love.graphics.newImage("gfx/room2.png")
 	},
+	food = {
+		sammich = love.graphics.newImage("gfx/sammich.png")
+	},
 	player_sprites = {
 		[true] = {
 			love.graphics.newImage("gfx/idle.png"),
@@ -24,5 +27,6 @@ images = {
 		}
 	},
 	cloud = love.graphics.newImage("gfx/cloud.png"),
-	elevator = love.graphics.newImage("gfx/elevator_open.png")
+	elevator = love.graphics.newImage("gfx/elevator_open.png"),
+	gear = love.graphics.newImage("gfx/gear.png")
 }

@@ -16,7 +16,7 @@ function Init:draw()
 
 	love.graphics.setFont(fonts[80])
 	love.graphics.printf("GET CLIMBING!", 0, height/2 - 150, width, "center")
-	if math.floor(love.timer.getTime() * 5)%5 < 3 then
+	if math.floor(love.timer.getTime() * 5) % 5 < 3 then
 		love.graphics.setFont(fonts[25])
 		love.graphics.printf("PRESS ANY KEY TO START", 0, height/2 + 150, width, "center")
 	end
@@ -42,6 +42,8 @@ function Init:draw()
 	end
 	
 	love.graphics.setColor(255, 255, 255)
+	
+	love.graphics.draw(images.gear, 30, 30)
 end
 
 function Init:touchpressed(x, y)
@@ -49,7 +51,7 @@ function Init:touchpressed(x, y)
 		y > height - 192 and y < height - 64 then
 		objects.player.gender = not objects.player.gender
 
-	elseif mode == "init" then
+	else
 		if y > height - 30 and x > width - 300 then
 			mode = "credits"
 		else
@@ -60,10 +62,7 @@ function Init:touchpressed(x, y)
 end
 
 function Init:mousepressed(x, y)
-
-	if mode == "init" then
-		if y > height - 30 and x > width - 300 then
-			mode = "credits"
-		end
+	if y > height - 30 and x > width - 300 then
+		mode = "credits"
 	end
 end

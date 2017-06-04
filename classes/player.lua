@@ -1,8 +1,6 @@
 Player = Object:extend()
 
-local foe_del = 0
 local filter = {r = 0, g = 0, b = 0}
-xs, ys = 0, 0
 
 function Player:new(x, y, world)
 	self.x = x
@@ -22,6 +20,8 @@ function Player:new(x, y, world)
 	self.nextlvl = 8
 	self.stamps = 0
 	self.dead = false
+	self.mr_text, self.lr_text = "", "" --most recent, least recent
+	self.xs, self.ys = 0, 0
 
 	self.body = love.physics.newBody(self.world, self.x, self.y, "dynamic")
 	self.shape = love.physics.newRectangleShape(self.w, self.h)
@@ -29,8 +29,9 @@ function Player:new(x, y, world)
 	
 	self.body:setFixedRotation(true)
 	self.body:setUserData({type = "player", w = self.w, h = self.h})
+	self.body:setMass(0.5)
 	
-	self.fixture:setFriction(0)
+	self.fixture:setFriction(touch and 0 or 1)
 	self.fixture:setRestitution(0)
 	self.fixture:setCategory(1)
 
@@ -39,43 +40,22 @@ function Player:new(x, y, world)
 end
 
 function Player:update(dt, dy)
-	xs, ys = self.body:getLinearVelocity()
+	self.xs, self.ys = self.body:getLinearVelocity()
 	
-	if mode == "play" then foe_del = foe_del + dt end
-	
-	if foe_del > 5 then
-		if math.floor(foe_del) % 10 == 0 and count(self.foes) < 5 then
-			local foe = Foe(math.random(width / 2 - 500, width / 2 + 500), edge(self.body, "top") - math.random(height, height + 600), self.world)
-			table.insert(self.foes, foe)
-			foe_del = 1
-		end
+	if mode == "play" and love.keyboard.isDown("a") then
+		self.body:setLinearVelocity(-400, self.ys)
+		self.heading = -1
 	end
-
-	for k, v in ipairs(self.foes) do
-		if math.random(100) == 1 then
-			v.heading = -v.heading
-		end
-		
-		foeXv, foeYv = v.body:getLinearVelocity()
-		v.body:setLinearVelocity(v.heading * math.abs(xs), foeYv)
-		v:update(dt, dy)
-		
-		if v.health <= 0 then
-			self.xp = self.xp + v.xp
-			table.remove(self.foes, k)
-			table.insert(self.drops, Item(stamps[v.value], v.body:getX(), v.body:getY(), world))
-			v.body:destroy()
-		elseif v.body:getY() > camera.y + height + 256 then
-			table.remove(self.foes, k)
-			v.body:destroy()
-		end
+	if mode == "play" and love.keyboard.isDown("d") then
+		self.body:setLinearVelocity(400, self.ys)
+		self.heading = 1
 	end
 	
 	if self.xp >= self.nextlvl then
 		self.lvl = self.lvl + 1
 		self.xp = self.xp - self.nextlvl
 		self.netxlvl = math.floor(2.5 * self.lvl) + 5
-		for i = 1, 5 do
+		for i = 1, self.lvl do
 			local dest = math.random(3)
 			if dest == 1 then
 				self.health = self.health + math.floor(self.lvl / 2)
@@ -86,6 +66,9 @@ function Player:update(dt, dy)
 				self.power.high = self.power.high + 1
 			end			
 		end
+		
+		print(self.lvl .. "=lvl")
+		print(self.nextlvl .. "=nextlvl")
 	end
 	
 	if filter.r > 0 then filter.r = filter.r - 5 end
@@ -104,32 +87,19 @@ function Player:update(dt, dy)
 end
 
 function Player:draw(dx, dy)
-	local side, im
+	local side = edge(self.body, self.heading == 1 and "left" or "right")
+	local im
 
-	if self.heading == -1 then
-		side = edge(self.body, "right")
-	else
-		side = edge(self.body, "left")
-	end
-
-	if round(xs, -1) ~= 0 then
+	if round(self.xs, -1) ~= 0 then
 	    if math.floor(love.timer.getTime() * 10) % 8 < 4 then
 			im = 2
 	    else im = 3
 	    end
 	else im = 1
 	end
-
-	for k, v in ipairs(self.foes) do
-		v:draw(dx, dy)
-	end
 	
 	love.graphics.setColor(255 - filter.r, 255 - filter.g, 255 - filter.b)
-	love.graphics.draw(images.player_sprites[self.gender][im], side, edge(self.body, "top"), 0, self.heading, 1)
-	
-	for k, v in ipairs(self.drops) do
-		v:draw()
-	end
+	love.graphics.draw(images.player_sprites[self.gender][im], math.floor(side), math.floor(edge(self.body, "top")), 0, self.heading, 1)
 
 	if touch then
 		love.graphics.setColor(255, 255, 255, 0x80)
@@ -166,26 +136,31 @@ function Player:draw(dx, dy)
 		
 		love.graphics.draw(images.stamps[1], 30 + dx, 90 + dy)
 		love.graphics.draw(images.icons.stairs, 124 + dx, 90 + dy)
+		
+		love.graphics.setColor(255, 255, 255, 0x80)
+		love.graphics.rectangle("fill", width / 5 - 5 + dx, height - 70 + dy, 3*width / 5 + 10, 50)
+		
+		love.graphics.setColor(65, 65, 65)
+		love.graphics.printf(self.mr_text, width/5 + dx, height - 40 + dy, 3*width / 5)
+		
+		love.graphics.setColor(65, 65, 65, 0x80)
+		love.graphics.printf(self.lr_text, width/5 + dx, height - 60 + dy, 3*width / 5)
+		
+		love.graphics.setColor(255, 255, 255)
 	end
 end
 
 function Player:keypressed(key, code, rep)
 	if key == "space" then
-	    self:jump(xs, ys)
+	    self:jump()
 	elseif key == "k" then
 		self:hit()
-	elseif key == "a" then
-		self.body:setLinearVelocity(-400, ys)
-		self.heading = -1
-	elseif key == "d" then
-		self.body:setLinearVelocity(400, ys)
-		self.heading = 1
 	end
 end
 
 function Player:keyreleased(key, code, rep)
-	if (key == "a" and xs < 0) or (key == "d" and xs > 0) then
-		self.body:setLinearVelocity(0, ys)
+	if (key == "a" and self.xs < 0) or (key == "d" and self.xs > 0) then
+		self.body:setLinearVelocity(0, self.ys)
 	end
 end
 
@@ -195,13 +170,13 @@ function Player:touchpressed(x, y)
 
 		if y > height - 158 and y < height - 30 then
 			if x < 158 then
-				self.body:setLinearVelocity(-400, ys)
+				self.body:setLinearVelocity(-400, self.ys)
 				self.heading = -1
 			elseif x < 316 then
-				self.body:setLinearVelocity(400, ys)
+				self.body:setLinearVelocity(400, self.ys)
 				self.heading = 1
 			elseif x > width - 158 then
-				self:jump(xs, ys)
+				self:jump()
 			elseif x > width - 316 then
 				self:hit()
 			end
@@ -212,19 +187,19 @@ end
 function Player:touchreleased(x, y)
 	if mode == "play" then
 		if count(love.touch.getTouches()) == 0 then
-			self.body:setLinearVelocity(0, ys)
+			self.body:setLinearVelocity(0, self.ys)
 		end
 	end
 end
 
-function Player:jump(xs, ys)
+function Player:jump()
 	if self.jumpable then
-		self.body:setLinearVelocity(xs, -1100)
+		self.body:setLinearVelocity(self.xs, -1100)
 	end
 end
 
 function Player:hit()
-	for k, v in ipairs(self.foes) do
+	for k, v in ipairs(objects.storeys[self:storey()].foes) do
 		if distance(v, self) < 100 then
 				v:deal(math.random(self.power.low, self.power.high))
 		end
@@ -237,6 +212,11 @@ function Player:deal(damage)
 	filter.b = 100
 end
 
-function Player:storey()
+function Player:addLine(line)
+	objects.player.lr_text = objects.player.mr_text
+	objects.player.mr_text = line
+end
+
+function Player:storey() --make more efficient with floor collisions
 	return math.floor((height - self.body:getY() - 32) / 300)
 end

@@ -6,38 +6,36 @@ objects = {}
 room = {w = 1500, h = 300}
 
 local function add_floor()
-	objects.walls[wall_count] = Wall(width/2, height - wall_count*room.h, room.w, 1, world, "floor")
-	
-	objects.boundaries[wall_count] = {
-		Wall((width - room.w) / 2, -(wall_count - 1)*300 + height, 1, 300, world, "wall"),
-		Wall((width + room.w) / 2 + 100, -(wall_count - 1)*300 + height, 1, 300, world, "wall")
-	}
-	
+	objects.storeys[wall_count] = Storey(wall_count, world)	
 	wall_count = wall_count + 1
 end
 
 function Game:load()
-	wall_count = 1
+	wall_count = 0
 	objects = {}
 
-	objects.player = Player(width/2, height - 128, world)
-	objects.walls = {Wall(width / 2 + 50, height, room.w + 100, 1, world, "floor")}
+	objects.player = Player(width/2, height - 400, world)
+	objects.storeys = {}
 	objects.clouds = {}
 	objects.boundaries = {}
-	
-	elevator = Wall(width / 2 + room.w / 2 + 50, height, 100, 1, world, "elev")
-	elevator.fixture:setCategory(2)
-	
-	elevator_joint = love.physics.newPrismaticJoint(elevator.body, objects.walls[1].body,
-		0, 0,
-		0, 1, true)
-	elevator_joint:setMotorEnabled(true)
-	elevator_joint:setMaxMotorForce(60000)
-	elevator_joint:setLimitsEnabled(false)
 
 	repeat
 		add_floor()
-	until #objects.walls * 300 > height
+	until #objects.storeys * room.h > height
+	
+	elevator = Wall(width / 2 + room.w / 2 + 50, height - 300, 100, 1, world, "elev")
+	elevator.fixture:setCategory(3)
+	elevator_joint = love.physics.newPrismaticJoint(elevator.body, objects.storeys[1].floor.body,
+		0, 0,
+		0, 1, true)
+	elevator_joint:setMotorEnabled(true)
+	elevator_joint:setMaxMotorForce(75000)
+	elevator_joint:setLimitsEnabled(false)
+	
+	elevator_ceiling = Wall(width / 2 + room.w / 2 + 50, height - 420, 80, 1, world, "ceil")
+	ceiling_joint = love.physics.newPrismaticJoint(elevator.body, elevator_ceiling.body, 0,0,0,120)
+	ceiling_joint:setMotorEnabled(false)
+	ceiling_joint:setLimits(3.75, 3.75)
 end
 
 function Game:update(dt)
@@ -56,15 +54,17 @@ function Game:update(dt)
 		end
 	end
 
-	if objects.walls[#objects.walls].y + height > camera.y then
+	if objects.storeys[#objects.storeys].y + height > camera.y then
 		add_floor()
 	end
 	
-	for k, v in ipairs(objects.walls) do
-		if not v.body:isDestroyed() and v.body:getY() > camera.y + height + 600 then
-			v.body:destroy()
-			objects.boundaries[k][1].body:destroy()
-			objects.boundaries[k][2].body:destroy()
+	for k, v in ipairs(objects.storeys) do
+		if not v.destroyed then
+			if v.y > camera.y + height + 1200 then
+				v:destroy()
+			else
+				v:update(dt, camera.y)
+			end
 		end
 	end
 	
@@ -83,8 +83,8 @@ function Game:update(dt)
 end
 
 function Game:draw()
-	local dy = 0
 	local dx = 0
+	local dy = 0
 	
 	local xPos, yPos = objects.player.body:getPosition()
 
@@ -104,30 +104,28 @@ function Game:draw()
 		dx = xPos - camera.x - 2 * width / 3
 	end
 	
-	if dy ~= 0 then
-		camera.y = round(camera.y + dy)		--rounding prevents interpolation
-	end
 	if dx ~= 0 then
-		camera.x = round(camera.x + dx)
+		camera.x = math.floor(camera.x + dx)		--rounding prevents interpolation
 	end
+	if dy ~= 0 then
+		camera.y = math.floor(camera.y + dy)
+	end
+	
 	camera:set()
 	
-	for k, v in ipairs(objects.walls) do
-		if not v.body:isDestroyed() then
-			local index
-			if k % 10 == 4 then
-				index = 2
-			else index = 1
-			end
-			love.graphics.draw(images.rooms[index], edge(v.body, "left"), v.y)
-		end
-	end
 	love.graphics.setColor(80, 80, 80)
 	love.graphics.rectangle("fill", (width + room.w) / 2, camera.y, 100, height)
 	love.graphics.setColor(140, 120, 100)
 	love.graphics.rectangle("fill", (width + room.w) / 2 + 48, camera.y, 4, height)
 	love.graphics.setColor(255, 255, 255)
-	love.graphics.draw(images.elevator, round(edge(elevator.body, "left")), round(edge(elevator.body, "top") - 120))
+	love.graphics.draw(images.elevator, math.floor(edge(elevator.body, "left")), math.floor(edge(elevator.body, "top") - 120))
+	
+	for k, v in ipairs(objects.storeys) do
+		if not v.destroyed then
+			v:draw()
+		end
+	end
+	
 	objects.player:draw(camera.x, camera.y)
 	camera:unset()
 end
