@@ -32,3 +32,18 @@ function edge(body, s)
 		return body:getX() - body:getUserData().w / 2
 	end
 end
+
+--{name = weight, ...}
+function weightedchoice(t)
+  local sum = 0
+  for _, v in pairs(t) do
+    sum = sum + v
+  end
+  
+  local rnd = math.random(sum)
+  
+  for k, v in pairs(t) do
+    if rnd < v then return k end
+    rnd = rnd - v
+  end
+end

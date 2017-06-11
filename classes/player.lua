@@ -20,6 +20,10 @@ function Player:new(x, y, world)
 	self.nextlvl = 8
 	self.stamps = 0
 	self.dead = false
+	self.age = 0
+	self.elevation = 0
+	self.state = "sober"
+	self.alteration = 0
 	self.mr_text, self.lr_text = "", "" --most recent, least recent
 	self.xs, self.ys = 0, 0
 
@@ -40,6 +44,7 @@ function Player:new(x, y, world)
 end
 
 function Player:update(dt, dy)
+	self.age = self.age + dt
 	self.xs, self.ys = self.body:getLinearVelocity()
 	
 	if mode == "play" and love.keyboard.isDown("a") then
@@ -71,6 +76,15 @@ function Player:update(dt, dy)
 		print(self.nextlvl .. "=nextlvl")
 	end
 	
+	if self.state ~= "sober" then
+		self.alteration = self.alteration - dt
+		if self.alteration <= 0 then
+			self:addLine("You sober up!")
+			self.alteration = 0
+			self.state = "sober"
+		end
+	end
+	
 	if filter.r > 0 then filter.r = filter.r - 5 end
 	if filter.g > 0 then filter.g = filter.g - 5 end
 	if filter.b > 0 then filter.b = filter.b - 5 end
@@ -99,8 +113,15 @@ function Player:draw(dx, dy)
 	end
 	
 	love.graphics.setColor(255 - filter.r, 255 - filter.g, 255 - filter.b)
+	
+	if self.state == "high" then
+		love.graphics.setShader(rainbow)
+		rainbow:send("time", self.age)
+	end
 	love.graphics.draw(images.player_sprites[self.gender][im], math.floor(side), math.floor(edge(self.body, "top")), 0, self.heading, 1)
-
+	--love.graphics.setShader()
+	
+	camera:unset()
 	if touch then
 		love.graphics.setColor(255, 255, 255, 0x80)
 		love.graphics.rectangle("fill", 30 + dx, height - 158 + dy, 128, 128)
@@ -112,42 +133,43 @@ function Player:draw(dx, dy)
 	
 	if mode == "play" then
 		love.graphics.setColor(215, 40, 40, 0x80)
-		love.graphics.rectangle("fill", 30 + dx, 20 + dy, width / 3, 36)
+		love.graphics.rectangle("fill", 30, 20, width / 3, 36)
 		
 		love.graphics.setColor(215, 40, 40)
-		love.graphics.rectangle("fill", 30 + dx, 20 + dy, self.health * (width / 3) / self.maxhealth, 36)
+		love.graphics.rectangle("fill", 30, 20, self.health * (width / 3) / self.maxhealth, 36)
 		
 		love.graphics.setColor(245, 230, 75, 0x80)
-		love.graphics.rectangle("fill", 30 + dx, 56 + dy, width / 3, 18)
+		love.graphics.rectangle("fill", 30, 56, width / 3, 18)
 		
 		love.graphics.setColor(245, 230, 75)
-		love.graphics.rectangle("fill", 30 + dx, 56 + dy, self.xp * (width / 3) / self.nextlvl, 18)
+		love.graphics.rectangle("fill", 30, 56, self.xp * (width / 3) / self.nextlvl, 18)
 		
 		love.graphics.setColor(65, 65, 65)
 		
 		love.graphics.setFont(fonts[15])
-		love.graphics.printf("level " .. self.lvl, 32 + dx, 62 + dy, width / 3, "left")
+		love.graphics.printf("level " .. self.lvl, 32, 62, width / 3, "left")
 		
 		love.graphics.setFont(fonts[20])
-		love.graphics.printf(self.stamps, 30 + dx, 160 + dy, 64, "center")
-		love.graphics.printf(self:storey(), 124 + dx, 160 + dy, 64, "center")
+		love.graphics.printf(self.stamps, 30, 160, 64, "center")
+		love.graphics.printf(self.elevation, 124, 160, 64, "center")
 		
 		love.graphics.setColor(255, 255, 255)
 		
-		love.graphics.draw(images.stamps[1], 30 + dx, 90 + dy)
-		love.graphics.draw(images.icons.stairs, 124 + dx, 90 + dy)
+		love.graphics.draw(images.stamps[1], 30, 90)
+		love.graphics.draw(images.icons.stairs, 124, 90)
 		
 		love.graphics.setColor(255, 255, 255, 0x80)
-		love.graphics.rectangle("fill", width / 5 - 5 + dx, height - 70 + dy, 3*width / 5 + 10, 50)
+		love.graphics.rectangle("fill", width / 5 - 5, height - 70, 3*width / 5 + 10, 50)
 		
 		love.graphics.setColor(65, 65, 65)
-		love.graphics.printf(self.mr_text, width/5 + dx, height - 40 + dy, 3*width / 5)
+		love.graphics.printf(self.mr_text, width/5, height - 40, 3*width / 5)
 		
 		love.graphics.setColor(65, 65, 65, 0x80)
-		love.graphics.printf(self.lr_text, width/5 + dx, height - 60 + dy, 3*width / 5)
+		love.graphics.printf(self.lr_text, width/5, height - 60, 3*width / 5)
 		
 		love.graphics.setColor(255, 255, 255)
 	end
+	camera:set()
 end
 
 function Player:keypressed(key, code, rep)

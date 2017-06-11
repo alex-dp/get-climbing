@@ -16,6 +16,7 @@ function beginContact(fix1, fix2, coll)
 				elevator.elevate = false
 			end
 			objects.player.jumpable = true
+			objects.player.elevation = objects.player:storey()
 		elseif ud.type == "elev" then
 			elevator.elevate = true
 			elevator.active = true
@@ -29,6 +30,11 @@ function beginContact(fix1, fix2, coll)
 				objects.player.health = objects.player.maxhealth
 			end
 			objects.player:addLine("You eat the food you found.")
+			ext:getBody():destroy()
+		elseif ud.type == "alterer" then
+			objects.player.state = ud.effect
+			objects.player.alteration = objects.player.alteration + ud.power * 10
+			objects.player:addLine("You're starting to feel " .. ud.effect .. ".")
 			ext:getBody():destroy()
 		end
 	end

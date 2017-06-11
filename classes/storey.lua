@@ -37,18 +37,12 @@ function Storey:update(dt, dy)
 	end
 
 	for k, v in ipairs(self.foes) do
-		if math.random(100) == 1 then
-			v.heading = -v.heading
-		end
-		
-		local foeXv, foeYv = v.body:getLinearVelocity()
-		v.body:setLinearVelocity(v.heading * math.abs(objects.player.xs), foeYv)
-		v:update(dt, dy)
-		
+		v:update(dt)
 		if v.health <= 0 then
 			objects.player.xp = objects.player.xp + v.xp
 			table.remove(self.foes, k)
-			table.insert(self.drops, Item(stamps[v.value], v.body:getX(), v.body:getY() - 40, world))
+			table.insert(self.drops, Item(v.drop, v.body:getX(), v.body:getY() - 80, world))
+			self.drops[#self.drops].body:setLinearVelocity(0, -800)
 			v.body:destroy()
 			
 			objects.player:addLine("You slew a colleague!")

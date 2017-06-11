@@ -16,7 +16,7 @@ function Foe:new(x, y, world)
 	self.maxhealth = 4		--health points at birth
 	self.xp = 1				--experience given upon slaying	(CHANGE ME)
 	self.power = {low = 1, high = 4}		--CHANGE ME AS WELL
-	self.value = math.random(2)	--food stamps given upon death
+	self.drop = nil	--item to drop upon death
 	
 	self.filter = {r = 0, g = 0, b = 0}
 
@@ -30,26 +30,22 @@ function Foe:new(x, y, world)
 	
 	self.body:setUserData({type = "foe", w = self.w, h = self.h})
 	self.body:setFixedRotation(true)
+	
+	repeat
+		self.drop = droppables[weightedchoice({one = 10, two = 7.5, beer = 5, acid = 100})]
+	until self.drop ~= nil
 end
 
 function Foe:update(dt, dy)
-	self.age = self.age + dt
 	local x, y = self.body:getLinearVelocity()
-
-	if x < 0 then
-		self.heading = -1
-	else
-		self.heading = 1
+	
+	if x == 0 or math.random(300) == 1 then
+		self.heading = -self.heading
 	end
-
-	if round(x, -2) == 0 and not self.changed then
-		repeat
-			self.heading = math.random(-1, 1)
-		until self.heading ~= 0
-		self.changed = true
-	elseif round(x, -2) ~= 0 then
-		self.changed = false
-	end
+	
+	self.age = self.age + dt
+	
+	self.body:setLinearVelocity(self.heading * 300, y)
 	
 	if self.age >= self.hit_age and not self.has_hit then
 		self:hit()

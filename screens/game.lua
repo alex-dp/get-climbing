@@ -2,7 +2,7 @@ Game = Object:extend()
 
 local wall_count = 1
 objects = {}
-
+droppables = {one = stamps[1], two = stamps[2], beer = alterers.beer, acid = alterers.acid}
 room = {w = 1500, h = 300}
 
 local function add_floor()
@@ -114,10 +114,11 @@ function Game:draw()
 	camera:set()
 	
 	love.graphics.setColor(80, 80, 80)
-	love.graphics.rectangle("fill", (width + room.w) / 2, camera.y, 100, height)
+	love.graphics.rectangle("fill", (width + room.w) / 2 + dx, camera.y - 200, 100, height + 400) --overflow for drunk oscillation
 	love.graphics.setColor(140, 120, 100)
-	love.graphics.rectangle("fill", (width + room.w) / 2 + 48, camera.y, 4, height)
+	love.graphics.rectangle("fill", (width + room.w) / 2 + 48 + dx, camera.y - 200, 4, height + 400)
 	love.graphics.setColor(255, 255, 255)
+	
 	love.graphics.draw(images.elevator, math.floor(edge(elevator.body, "left")), math.floor(edge(elevator.body, "top") - 120))
 	
 	for k, v in ipairs(objects.storeys) do

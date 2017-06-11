@@ -30,3 +30,27 @@ food = {
 		}
 	}
 }
+
+alterers = {
+	beer = {
+		image = images.alterers.beer,
+		userdata = {
+			type = "alterer",
+			effect = "drunk",
+			power = math.pi,		--rotation will start from sin(6pi) = 0
+			w = 95,
+			h = 42
+		}
+	},
+	
+	acid = {
+		image = images.alterers.acid,
+		userdata = {
+			type = "alterer",
+			effect = "high",
+			power = 3,
+			w = 64,
+			h = 64
+		}
+	}
+}

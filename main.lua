@@ -37,6 +37,7 @@ function love.load()
 	require "logic/camera"
 	require "logic/helper"
 	require "logic/callbacks"
+	require "logic/shaders"
 	require "screens/game"
 	require "screens/init"
 	require "screens/credits"
@@ -105,7 +106,6 @@ function love.keypressed(key, code, rep)
 			if not hiscore or storey > tonumber(hiscore) then
 				love.filesystem.write("hiscore", storey)
 				hiscore = storey
-				print(love.filesystem.getSaveDirectory())
 			end
 			love.event.quit()
 		end

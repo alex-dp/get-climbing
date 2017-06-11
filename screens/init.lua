@@ -42,8 +42,6 @@ function Init:draw()
 	end
 	
 	love.graphics.setColor(255, 255, 255)
-	
-	love.graphics.draw(images.gear, 30, 30)
 end
 
 function Init:touchpressed(x, y)
